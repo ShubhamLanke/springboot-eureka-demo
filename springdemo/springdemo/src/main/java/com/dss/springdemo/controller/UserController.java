@@ -2,8 +2,11 @@ package com.dss.springdemo.controller;
 
 
 import com.dss.springdemo.config.Response;
+import com.dss.springdemo.controller.dto.OrderDTO;
 import com.dss.springdemo.entity.User;
+import com.dss.springdemo.feign.UserInterface;
 import com.dss.springdemo.service.UserService;
+import jakarta.ws.rs.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -19,21 +22,13 @@ public class UserController {
 
     private final RestTemplate restTemplate;
     private final UserService userService;
+    private final UserInterface userInterface;
 
     @Autowired
-    public UserController(RestTemplate restTemplate, UserService userService) {
+    public UserController(RestTemplate restTemplate, UserService userService, UserInterface userInterface) {
         this.restTemplate = restTemplate;
         this.userService = userService;
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Response<User>> getUserById(@PathVariable Integer id){
-        return ResponseEntity.ok(userService.getUserById(id));
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<Response<List<User>>> getAllUsers() {
-        return ResponseEntity.ok(userService.fetchAllOrders());
+        this.userInterface = userInterface;
     }
 
     @PostMapping("/save_user")
@@ -46,10 +41,24 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, updatedUser));
     }
 
-    @GetMapping("/orders/{userId}")
-    public ResponseEntity<Response<?>> getUserWithOrders(@Value("${spring-demo-order}") String orderServiceBaseUrl, @PathVariable Integer userId){
-        return ResponseEntity.ok(userService.getUserWithOrders(orderServiceBaseUrl, userId));
+    @GetMapping("/{id}")
+    public ResponseEntity<Response<User>> getUserById(@PathVariable Integer id){
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<Response<List<User>>> getAllUsers() {
+        return ResponseEntity.ok(userService.fetchAllOrders());
+    }
+
+    @GetMapping("/orders/{userId}")
+    public ResponseEntity<Response<?>> getUserWithOrders(@PathVariable Integer userId){
+        return ResponseEntity.ok(userService.getUserWithOrders(userId));
+    }
+
+    @PostMapping("/place_order")
+    public ResponseEntity<Response<OrderDTO>> placeOrder(@RequestBody OrderDTO orderRequest) {
+        return ResponseEntity.ok(userService.placeOrder(orderRequest));
+    }
 
 }
