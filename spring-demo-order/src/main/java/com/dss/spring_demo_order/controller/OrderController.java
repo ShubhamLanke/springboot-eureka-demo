@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/orders")
@@ -28,26 +29,24 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    private static final List<Order> ORDERS = Arrays.asList(
-            new Order(1, 1, "Laptop"),
-            new Order(2, 2, "Mobile"),
-            new Order(3, 3, "Keyboard")
-    );
-
+//    private static final List<Order> ORDERS = Arrays.asList(
+//            new Order(1, 1, "Laptop"),
+//            new Order(2, 2, "Mobile"),
+//            new Order(3, 3, "Keyboard")
+//    );
+//
     @GetMapping("/{orderId}")
     public Mono<String> getOrderWithUser(@PathVariable("orderId") Integer orderId) {
-        Order order = ORDERS.stream().filter(orders -> orders.getId().equals(orderId))
-                .findFirst()
-                .orElse(null);
+        Optional<Order> order = orderService.fetchOrderById(orderId);
 
         if (Objects.isNull(order)) {
             return Mono.just("Order not found!");
         }
 
-        return webClient.get().uri("/users/" + order.getUserId())
+        return webClient.get().uri("/users/" + order.get().getUserId())
                 .retrieve()
                 .bodyToMono(User.class)
-                .map(user -> "OrderId: " + order.getId() + ", Product: " + order.getProduct() + ", Ordered by: " + user.getName());
+                .map(user -> "OrderId: " + order.get().getId() + ", Product: " + order.get().getProduct() + ", Ordered by: " + user.getName());
     }
 
     @GetMapping("/users")
@@ -56,14 +55,6 @@ public class OrderController {
                 .uri("/users/all")
                 .retrieve()
                 .bodyToFlux(User.class);
-    }
-
-    @GetMapping("/fetch_data")
-    public Flux<String> fetchData() {
-        return webClient.get()
-                .uri("https://api.restful-api.dev/objects")
-                .retrieve()
-                .bodyToFlux(String.class);
     }
 
     @PostMapping("/save_order")
